@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:patteera_reader/models/analysis_result.dart';
 import 'package:patteera_reader/services/ocr_service.dart';
 import 'package:patteera_reader/services/readability_service.dart';
+import 'package:patteera_reader/ui/settings_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:dotted_border/dotted_border.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -83,6 +83,7 @@ class _MainScreenState extends State<MainScreen>
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
+    final ocrService = context.read<OcrService>(); // Moved before async gap
     final image = await picker.pickImage(source: source);
 
     if (image != null) {
@@ -92,7 +93,6 @@ class _MainScreenState extends State<MainScreen>
       });
 
       try {
-        final ocrService = context.read<OcrService>();
         final text = await ocrService.extractText(image.path);
 
         if (mounted) {
@@ -121,30 +121,68 @@ class _MainScreenState extends State<MainScreen>
           children: [
             _buildHeader(),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Mobile / Narrow Layout
+                  if (constraints.maxWidth < 900) {
+                    return Column(
                       children: [
-                        _buildTabBar(),
+                        // Result Panel (Top)
+                        if (_result != null || _isAnalyzing)
+                          SizedBox(
+                            height:
+                                constraints.maxHeight *
+                                0.45, // Take 45% of height
+                            child: _buildResultPanel(),
+                          ),
+
+                        // Input/Tabs (Bottom, takes remaining space)
                         Expanded(
-                          child: TabBarView(
-                            controller: _tabController,
+                          child: Column(
                             children: [
-                              _buildTextInput(),
-                              _buildFileUpload(),
-                              _buildImageInput(),
+                              Expanded(
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _buildTextInput(),
+                                    _buildFileUpload(),
+                                    _buildImageInput(),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  if (_result != null || _isAnalyzing)
-                    Expanded(flex: 2, child: _buildResultPanel()),
-                ],
+                    );
+                  }
+
+                  // Desktop / Wide Layout
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildTextInput(),
+                                  _buildFileUpload(),
+                                  _buildImageInput(),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_result != null || _isAnalyzing)
+                        Expanded(flex: 2, child: _buildResultPanel()),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -160,7 +198,7 @@ class _MainScreenState extends State<MainScreen>
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -174,58 +212,36 @@ class _MainScreenState extends State<MainScreen>
             color: Theme.of(context).colorScheme.primary,
           ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Patteera Reader',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Patteera Reader',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                'Text Readability Analyzer',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                Text(
+                  'Text Readability Analyzer',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        dividerColor: Colors.transparent,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              ],
             ),
-          ],
-        ),
-        labelColor: Colors.white,
-        unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        padding: const EdgeInsets.all(6),
-        tabs: const [
-          Tab(text: "Type / Paste", icon: Icon(Icons.keyboard)),
-          Tab(text: "Upload File", icon: Icon(Icons.upload_file)),
-          Tab(text: "Scan Image", icon: Icon(Icons.image_search)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -283,7 +299,9 @@ class _MainScreenState extends State<MainScreen>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.5),
               width: 2,
               style: BorderStyle.solid, // Fallback to solid for now
             ),
@@ -293,7 +311,9 @@ class _MainScreenState extends State<MainScreen>
             width: 300,
             height: 200,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -360,7 +380,7 @@ class _MainScreenState extends State<MainScreen>
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -391,7 +411,7 @@ class _MainScreenState extends State<MainScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -439,9 +459,10 @@ class _MainScreenState extends State<MainScreen>
                                   ).colorScheme.primaryContainer,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary.withOpacity(0.4),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.4),
                                       blurRadius: 20,
                                       spreadRadius: 5,
                                     ),
@@ -517,7 +538,7 @@ class _MainScreenState extends State<MainScreen>
                             _result!.details['totalWords'].toString(),
                           ),
                           _buildStatRow(
-                            "Off-List Words",
+                            "Off-List",
                             "${(_result!.details['offList'] as num).toStringAsFixed(1)}%",
                           ),
                           ...(_result!.details.entries
@@ -525,14 +546,20 @@ class _MainScreenState extends State<MainScreen>
                                 (e) =>
                                     e.key != 'totalWords' &&
                                     e.key != 'score' &&
-                                    e.key != 'offList',
+                                    e.key != 'offList' &&
+                                    e.key != 'weights',
                               )
-                              .map(
-                                (e) => _buildStatRow(
-                                  e.key,
+                              .map((e) {
+                                final weight =
+                                    _result!.details['weights']?[e.key];
+                                final label = weight != null
+                                    ? "${e.key} (x$weight)"
+                                    : e.key;
+                                return _buildStatRow(
+                                  label,
                                   "${(e.value as num).toStringAsFixed(1)}%",
-                                ),
-                              )),
+                                );
+                              })),
                         ].animate(interval: 100.ms).fadeIn(duration: 400.ms).slideX(begin: 0.1, end: 0),
                       ),
                     ),
@@ -549,7 +576,10 @@ class _MainScreenState extends State<MainScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyLarge),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+          const SizedBox(width: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(

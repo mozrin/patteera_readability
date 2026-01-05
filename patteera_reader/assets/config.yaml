@@ -11,17 +11,28 @@ algorithm:
   bands:
     - name: "Level 1 (0-1000)"
       path: "assets/words/level1.txt"
-      weight: 1.0
+      weight: 10.0
     - name: "Level 2 (1000-2000)"
       path: "assets/words/level2.txt"
-      weight: 1.0
+      weight: 10.0
     - name: "Level 3 (2000-3000)"
       path: "assets/words/level3.txt"
+      weight: 10.0
+    - name: "Academic"
+      path: "assets/words/academic.txt"
+      weight: 0.0
+    - name: "Computer"
+      path: "assets/words/computer.txt"
+      weight: 5.0
+    - name: "Slang"
+      path: "assets/words/slang.txt"
       weight: 1.0
-    - name: "Level 4 (3000-4000)"
-      path: "assets/words/level4.txt"
-      weight: 1.0
-    # Add Level 3, Academic, etc. as needed
+    - name: "Medical"
+      path: "assets/words/medical.txt"
+      weight: 0.0
+    - name: "Science"
+      path: "assets/words/science.txt"
+      weight: 0.0
 
   # In the paper, a high percentage of words in the first 3 bands = Easier text.
   # We will sum the percentages of matched words.
@@ -33,17 +44,17 @@ algorithm:
 
     thresholds:
       - score: 95
-        label: "Too Easy"
+        label: "Simple"
         color: "0xFF4CAF50" # Green
       - score: 90
         label: "Easy"
         color: "0xFF8BC34A" # Light Green
       - score: 80
-        label: "Optimal"
+        label: "Moderate"
         color: "0xFFFFC107" # Amber
       - score: 70
-        label: "Difficult"
+        label: "Challenging"
         color: "0xFFFF9800" # Orange
       - score: 0
-        label: "Too Difficult"
+        label: "Difficult"
         color: "0xFFF44336" # Red

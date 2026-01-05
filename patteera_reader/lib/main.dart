@@ -5,19 +5,21 @@ import 'package:patteera_reader/services/config_service.dart';
 import 'package:patteera_reader/services/readability_service.dart';
 import 'package:patteera_reader/services/ocr_service.dart';
 import 'package:patteera_reader/ui/main_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
 
   final configService = ConfigService();
-  await configService.loadConfig();
+  await configService.init();
 
   runApp(
     MultiProvider(
       providers: [
-        Provider.value(value: configService),
+        ChangeNotifierProvider.value(value: configService),
         ProxyProvider<ConfigService, ReadabilityService>(
-          update: (_, config, __) => ReadabilityService(config),
+          update: (_, config, previous) => ReadabilityService(config),
         ),
         Provider(create: (_) => OcrService()),
       ],

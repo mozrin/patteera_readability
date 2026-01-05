@@ -4,28 +4,29 @@ import 'package:patteera_reader/services/config_service.dart';
 class ReadabilityService {
   final ConfigService _configService;
 
-  // Maps band name to set of words
-  Map<String, Set<String>> _wordLists = {};
-  bool _isLoaded = false;
+  final Map<String, Set<String>> _wordLists = {};
 
   ReadabilityService(this._configService);
 
+  void invalidateCache() {
+    _wordLists.clear();
+  }
+
   /// Loads the word lists defined in the config if not already loaded.
   Future<void> _loadWordLists() async {
-    if (_isLoaded) return;
-
-    final config = _configService.get('algorithm');
-    if (config == null || config['bands'] == null) return;
-
-    final bands = config['bands'] as List;
+    final bands = _configService.bands;
 
     for (var band in bands) {
       final String name = band['name'];
       final String path = band['path'];
 
+      // Only load if not already present
+      if (_wordLists.containsKey(name) && _wordLists[name]!.isNotEmpty) {
+        continue;
+      }
+
       try {
         final content = await rootBundle.loadString(path);
-        // Split by lines and whitespace to get words, lowercase them
         final words = content
             .split(RegExp(r'\s+'))
             .map((w) => w.trim().toLowerCase())
@@ -34,11 +35,12 @@ class ReadabilityService {
 
         _wordLists[name] = words;
       } catch (e) {
-        print("Error loading word list $path: $e");
+        // If it's a user defined path that might be a local file, try File
+        // Local file path handling to be added
+        // debugPrint("Error loading word list $path: $e");
         _wordLists[name] = {};
       }
     }
-    _isLoaded = true;
   }
 
   Future<Map<String, dynamic>> analyze(String text) async {
@@ -71,76 +73,82 @@ class ReadabilityService {
     }
 
     // 2. Calculate LFP
-    final config = _configService.get('algorithm');
-    final bands = config['bands'] as List;
+    // Fetch latest bands from Hive config
+    final bands = _configService.bands;
 
     double totalScore = 0.0;
     Map<String, int> bandCounts = {};
     Map<String, double> bandPercentages = {};
 
-    // Helper to check which band a word belongs to (prioritizing 1st band, then 2nd...)
-    // Actually, usually we check if it is in K1, if not check K2, etc.
-    // The bands in config should be ordered by priority (e.g. 1k, 2k, 3k).
-
     int identifiedWords = 0;
 
     for (var word in tokens) {
-      bool found = false;
       for (var band in bands) {
         final String name = band['name'];
         final Set<String> list = _wordLists[name] ?? {};
 
         if (list.contains(word)) {
           bandCounts[name] = (bandCounts[name] ?? 0) + 1;
-          found = true;
-          break; // Stop checking other bands for this word
+          identifiedWords++;
+          break; // Assign to first matching level (priority order in config matters)
         }
       }
-      if (found) identifiedWords++;
     }
 
-    // Calculate Percentages and Weighted Score
+    double weightedSum = 0.0;
+    Map<String, double> bandWeights = {};
+
     for (var band in bands) {
       final String name = band['name'];
       final int count = bandCounts[name] ?? 0;
-      final double percent = (count / totalWords) * 100.0;
+      final double percentage = (count / totalWords) * 100;
       final double weight = (band['weight'] as num).toDouble();
 
-      bandPercentages[name] = percent;
-      totalScore += percent * weight;
+      bandPercentages[name] = percentage;
+      bandWeights[name] = weight;
+
+      // New Formula: Weighted Average of Easiness
+      // Each word contributes (Weight * 10) to the score sum.
+      // Example: Weight 9 -> 90 points.
+      weightedSum += count * (weight * 10.0);
     }
 
-    // Off-list words
+    // Off-list words contribute 0 points (Implicitly handled by not adding to weightedSum)
     final offListCount = totalWords - identifiedWords;
     final offListPercent = (offListCount / totalWords) * 100.0;
     bandPercentages['Off-List'] = offListPercent;
 
+    // Final Calculation: Average Score per Word
+    totalScore = weightedSum / totalWords;
+
+    // Clamp not strictly needed if weights are 0-10, but safe to keep
+    if (totalScore > 100.0) totalScore = 100.0;
+
     // 3. Determine Label
-    String label = _getLabel(totalScore);
+    // The previous implementation used thresholds from config directly.
+    // LFP logic varies, typically high L1+L2% = Easy.
+    // Here we use the calculated 'totalScore' which is weighted sum of percentages.
+
+    String label = 'Unknown';
+    final thresholds = _configService.thresholds;
+
+    // Check thresholds
+    for (var t in thresholds) {
+      if (totalScore >= (t['score'] as num).toDouble()) {
+        label = t['label'];
+        break;
+      }
+    }
 
     // Format details for UI
     Map<String, dynamic> details = {
       'totalWords': totalWords,
-      'score': totalScore, // This is the coverage score
+      'score': totalScore,
       'offList': offListPercent,
+      'weights': bandWeights, // Add this line
       ...bandPercentages,
     };
 
     return {'score': totalScore, 'label': label, 'details': details};
-  }
-
-  String _getLabel(double score) {
-    final config = _configService.get('algorithm');
-    if (config != null &&
-        config['classification'] != null &&
-        config['classification']['thresholds'] != null) {
-      final thresholds = config['classification']['thresholds'] as List;
-      for (var t in thresholds) {
-        if (score >= (t['score'] as num).toDouble()) {
-          return t['label'];
-        }
-      }
-    }
-    return "Unknown";
   }
 }
