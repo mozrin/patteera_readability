@@ -1,0 +1,49 @@
+# Config for Readability Algorithm (Patteera Thesis Based)
+# The paper suggests "Text difficulty was indicated by LFP (Lexical Frequency Profile)".
+# Specifically, the percentage of tokens from the first three frequency bands.
+
+algorithm:
+  name: "Patteera LFP Index"
+  method: "LFP" # Lexical Frequency Profile
+
+  # Frequency Bands Definitions
+  # The algorithm calculates the percentage of words in the text that appear in these lists.
+  bands:
+    - name: "Level 1 (0-1000)"
+      path: "assets/words/level1.txt"
+      weight: 1.0
+    - name: "Level 2 (1000-2000)"
+      path: "assets/words/level2.txt"
+      weight: 1.0
+    - name: "Level 3 (2000-3000)"
+      path: "assets/words/level3.txt"
+      weight: 1.0
+    - name: "Level 4 (3000-4000)"
+      path: "assets/words/level4.txt"
+      weight: 1.0
+    # Add Level 3, Academic, etc. as needed
+
+  # In the paper, a high percentage of words in the first 3 bands = Easier text.
+  # We will sum the percentages of matched words.
+
+  classification:
+    # Based on the paper's mention of "Too Difficult" to "Too Easy"
+    # These thresholds are hypothetical. The user must adjust based on Chapter 5 results.
+    # Score = Sum of % coverage of defined bands (0-100)
+
+    thresholds:
+      - score: 95
+        label: "Too Easy"
+        color: "0xFF4CAF50" # Green
+      - score: 90
+        label: "Easy"
+        color: "0xFF8BC34A" # Light Green
+      - score: 80
+        label: "Optimal"
+        color: "0xFFFFC107" # Amber
+      - score: 70
+        label: "Difficult"
+        color: "0xFFFF9800" # Orange
+      - score: 0
+        label: "Too Difficult"
+        color: "0xFFF44336" # Red
