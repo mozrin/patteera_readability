@@ -1,8 +1,6 @@
-<div align="center">
-  <img src="assets/icon/logo.png" alt="Patteera Readability Logo" width="120" height="120">
-</div>
-
 # Patteera Readability
+
+![Patteera Readability Logo](assets/icon/logo.png)
 
 A sophisticated text readability analyzer built with Flutter, based on the specific **Lexical Frequency Profile (LFP)** theories proposed by **Patteera Thienpermpool**.
 

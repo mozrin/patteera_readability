@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:patteera_reader/services/config_service.dart';
-import 'package:patteera_reader/services/readability_service.dart';
+import 'package:patteera_readability/services/config_service.dart';
+import 'package:patteera_readability/services/readability_service.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
