@@ -37,4 +37,4 @@ The core scoring methodology and theoretical framework for this application are 
 - **Provider**: State management
 
 ---
-*Built with ❤️ in collaboration with the research of Patteera Thienpermpool.*
+*Built in collaboration with the research of Patteera Thienpermpool. Used with permission.*
