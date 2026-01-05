@@ -3,10 +3,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:patteera_reader/models/analysis_result.dart';
-import 'package:patteera_reader/services/ocr_service.dart';
-import 'package:patteera_reader/services/readability_service.dart';
-import 'package:patteera_reader/ui/settings_screen.dart';
+import 'package:patteera_readability/models/analysis_result.dart';
+import 'package:patteera_readability/services/ocr_service.dart';
+import 'package:patteera_readability/services/readability_service.dart';
+import 'package:patteera_readability/ui/settings_screen.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -217,7 +217,7 @@ class _MainScreenState extends State<MainScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Patteera Reader',
+                  'Patteera Readability',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

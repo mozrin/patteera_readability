@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:patteera_reader/main.dart';
+import 'package:patteera_readability/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
@@ -16,7 +16,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that the title is present
-    expect(find.text('Patteera Reader'), findsOneWidget);
+    expect(find.text('Patteera Readability'), findsOneWidget);
     expect(find.text('Text Readability Analyzer'), findsOneWidget);
   });
 }

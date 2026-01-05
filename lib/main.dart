@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:patteera_reader/services/config_service.dart';
-import 'package:patteera_reader/services/readability_service.dart';
-import 'package:patteera_reader/services/ocr_service.dart';
-import 'package:patteera_reader/ui/main_screen.dart';
+import 'package:patteera_readability/services/config_service.dart';
+import 'package:patteera_readability/services/readability_service.dart';
+import 'package:patteera_readability/services/ocr_service.dart';
+import 'package:patteera_readability/ui/main_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
@@ -34,7 +34,7 @@ class PatteeraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Patteera Reader',
+      title: 'Patteera Readability',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(

@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:patteera_reader/services/config_service.dart';
+import 'package:patteera_readability/services/config_service.dart';
 
 class ReadabilityService {
   final ConfigService _configService;
