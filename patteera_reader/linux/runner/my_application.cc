@@ -54,9 +54,29 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 720);
 
+  // Create the project first to resolve assets path
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
+
+  // Set Window Icon using Flutter Assets Path
+  const gchar* assets_path = fl_dart_project_get_assets_path(project);
+  if (assets_path != nullptr) {
+      char* icon_path = g_build_filename(assets_path, "assets", "icon", "logo.png", NULL);
+      
+      // If path is relative, make it absolute based on CWD or Exe? 
+      // fl_dart_project_get_assets_path usually returns relative to binary or absolute.
+      // Let's debug print it just in case.
+      // g_print("Assets Path: %s\n", assets_path);
+      // g_print("Icon Path: %s\n", icon_path);
+
+      GError* err = NULL;
+      if (!gtk_window_set_icon_from_file(window, icon_path, &err)) {
+         g_warning("Failed to set icon from assets: %s", err->message);
+         g_error_free(err);
+      }
+      g_free(icon_path);
+  }
 
   FlView* view = fl_view_new(project);
   GdkRGBA background_color;
