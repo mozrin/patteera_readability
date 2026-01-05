@@ -32,7 +32,10 @@ algorithm:
       weight: 0.0
     - name: "Science"
       path: "assets/words/science.txt"
-      weight: 0.0
+      weight: 4.0
+    - name: "Food & Drink"
+      path: "assets/words/food_drink.txt"
+      weight: 9.0
 
   # In the paper, a high percentage of words in the first 3 bands = Easier text.
   # We will sum the percentages of matched words.
